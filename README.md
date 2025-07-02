@@ -1,27 +1,175 @@
-# PipesDeepDive
+Custom Pipe
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.0.0.
+@Pipe({
+  name: 'temperature',
+  standalone: true
+})
 
-## Development server
+this is Pipe decorator which has the name of the pip here its 'temperature' and standalone property.
+Pipe has a transform method where Angular calls automatically when it encounters a custom pipe in a template. The value you pass to the pipe from template is used as arguments in transform method in pipe. Here 'args'. 
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+example:-
 
-## Code scaffolding
+transform(value: unknown, ...args: unknown[]): unknown {
+    return null;
+  }
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
-## Build
+Additionally PipeTransform is added after implements next to the TemperaturePipe class.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+eg:-
 
-## Running unit tests
+export class TemperaturePipe implements PipeTransform {
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+  transform(value: string | number, ...args: unknown[]): unknown {
+    return null;
+  }
 
-## Running end-to-end tests
+}
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+here 'value' in transform method is the value on which the pipe is used and args is the arguments passed from template where pipe is used, args can have multiple arguments.
 
-## Further help
+The type of 'value' to accept here we use either string or number as per the above code.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+app.component.html
+
+ <p>New York: {{ currentTemperaturs.newYork | temperature }}</p>
+
+here 'value' in transform in TemperaturePipe gets value 'currentTemperaturs.newYork'
+
+Full example
+
+app.component.html
+
+  <p>New York: {{ currentTemperaturs.newYork | temperature }}</p>
+    <p>Berlin: {{ currentTemperaturs.berlin | temperature }}</p>
+    <p>Paris: {{ currentTemperaturs.paris | temperature }}</p>
+    <p>Chicago: {{ currentTemperaturs.chicago | temperature }}</p>
+
+app.component.ts
+
+import { Component } from '@angular/core';
+import { TemperaturePipe } from './temperature.pipe';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+  imports: [TemperaturePipe],
+})
+export class AppComponent {
+  currentDate = new Date();
+  currentTemperaturs = {
+    berlin: 4.2749812,
+    newYork: 18.1214,
+    paris: 72.1209001,
+    chicago: 65.0775238,
+  };
+}
+
+
+temperature.pipe.ts
+
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'temperature',
+  standalone: true,
+})
+export class TemperaturePipe implements PipeTransform {
+  transform(value: string | number,  inputType: 'cel' | 'fah',
+    outputType?: 'cel' | 'fah') {
+    let val;
+    if (typeof value === 'string') {
+      val = parseFloat(value);
+    } else {
+      val = value;
+    }
+    const celsiusToFaranheit = val * (9 / 5) + 32;
+    return `${celsiusToFaranheit} F`;
+  }
+}
+
+
+Accepting parameters to custom pipe
+
+
+Here args are given as inputType and outputType with data type as string 'cel' and 'fah' which represents Celsius and Fahrenheit. Additionally we have kept outputType argument optional.
+
+temperature.pipe.ts
+
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'temperature',
+  standalone: true,
+})
+export class TemperaturePipe implements PipeTransform {
+  transform(
+    value: string | number,
+    inputType: 'cel' | 'fah',
+    outputType?: 'cel' | 'fah'
+  ) {
+    let val;
+    if (typeof value === 'string') {
+      val = parseFloat(value);
+    } else {
+      val = value;
+    }
+    let celsiusToFaranheit: number;
+    if (inputType === 'cel' && outputType === 'fah') {
+      celsiusToFaranheit = val * (9 / 5) + 32;
+    } else if (inputType === 'fah' && outputType === 'cel') {
+      celsiusToFaranheit = (val - 32) * (5 / 9);
+    } else {
+      celsiusToFaranheit = val;
+    }
+    let symbol: 'C' | 'F';
+    if (!outputType) {
+      symbol = inputType === 'cel' ? 'C' : 'F';
+    } else {
+      symbol = outputType === 'cel' ? 'C' : 'F';
+    }
+    return `${celsiusToFaranheit} ${symbol}`;
+  }
+}
+
+app.component.html
+
+<p>New York: {{ currentTemperaturs.newYork | temperature :'cel':'fah'}}</p>
+
+here inputType is cel and outputType is fah.
+
+ <p>Berlin: {{ currentTemperaturs.berlin | temperature : "fah" : "cel" }}</p>
+
+here inputType is fah and outputType is cel.
+
+ <p>Paris: {{ currentTemperaturs.paris | temperature : "cel" }}</p>
+
+here inputType is cel and outputType is not having value since its optional
+
+ <p>Chicago: {{ currentTemperaturs.chicago | temperature : "fah" }}</p>
+
+here inputType is fah and outputType is not having value since its optional
+
+
+app.component.ts
+
+import { Component } from '@angular/core';
+import { TemperaturePipe } from './temperature.pipe';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+  imports: [TemperaturePipe],
+})
+export class AppComponent {
+  currentDate = new Date();
+  currentTemperaturs = {
+    berlin: 4.2749812,
+    newYork: 18.1214,
+    paris: 72.1209001,
+    chicago: 65.0775238,
+  };
+}
